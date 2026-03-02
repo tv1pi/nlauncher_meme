@@ -1,12 +1,25 @@
-const { kv } = require('@vercel/kv');
+const { put, get } = require('@vercel/blob');
 
-const MEMES_KEY = 'memes';
+const MEMES_PATH = 'memes.json';
+
+async function readMemes() {
+  const result = await get(MEMES_PATH, { access: 'public' });
+  if (!result || result.statusCode !== 200 || !result.stream) return [];
+  const chunks = [];
+  for await (const chunk of result.stream) chunks.push(chunk);
+  const text = Buffer.concat(chunks).toString('utf-8');
+  try {
+    return JSON.parse(text);
+  } catch {
+    return [];
+  }
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   if (req.method === 'GET') {
     try {
-      const list = (await kv.get(MEMES_KEY)) || [];
+      const list = await readMemes();
       res.end(JSON.stringify(list));
     } catch (e) {
       res.status(500).end(JSON.stringify([]));
@@ -37,9 +50,14 @@ module.exports = async (req, res) => {
     date: new Date().toISOString()
   };
   try {
-    const list = (await kv.get(MEMES_KEY)) || [];
+    const list = await readMemes();
     list.unshift(meme);
-    await kv.set(MEMES_KEY, list);
+    await put(MEMES_PATH, JSON.stringify(list), {
+      access: 'public',
+      contentType: 'application/json',
+      addRandomSuffix: false,
+      allowOverwrite: true
+    });
     res.status(201).end(JSON.stringify(meme));
   } catch (e) {
     res.status(500).end(JSON.stringify({ error: 'Save failed' }));
