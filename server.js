@@ -9,11 +9,15 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'memes.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
-fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
+// На Vercel файловая система только для чтения — не создаём папки (лента в Blob через api/memes.js)
+if (!process.env.VERCEL) {
+  try {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
+    }
+  } catch (e) { /* игнор при отсутствии прав */ }
 }
 
 const storage = multer.diskStorage({
