@@ -59,6 +59,25 @@ function writeMemes(memes) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(memes, null, 2), 'utf8');
 }
 
+const ADMIN_LOGIN = process.env.ADMIN_LOGIN || 'tv1p';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '06ebb7b2';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || process.env.ADMIN_PASSWORD || ADMIN_PASSWORD;
+
+function adminAuth(req, res, next) {
+  const auth = req.headers.authorization || req.headers.Authorization;
+  const token = typeof auth === 'string' && auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  if (token && token === ADMIN_TOKEN) return next();
+  res.status(401).json({ error: 'Требуется авторизация' });
+}
+
+app.post('/api/auth', (req, res) => {
+  const { username, password: pw } = req.body || {};
+  if (String(username || '').trim() !== ADMIN_LOGIN || String(pw || '') !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Неверный логин или пароль' });
+  }
+  res.json({ ok: true, token: ADMIN_TOKEN, username: ADMIN_LOGIN });
+});
+
 app.get('/api/memes', (req, res) => {
   const memes = readMemes();
   const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -120,8 +139,35 @@ app.post('/api/memes', (req, res, next) => {
   res.redirect('/');
 });
 
+app.patch('/api/memes', adminAuth, (req, res) => {
+  const { id, nickname, caption } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'id required' });
+  const memes = readMemes();
+  const idx = memes.findIndex(m => m.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Пост не найден' });
+  if (nickname !== undefined) memes[idx].nickname = String(nickname).trim() || 'Аноним';
+  if (caption !== undefined) memes[idx].caption = String(caption).trim() || '';
+  writeMemes(memes);
+  res.json(memes[idx]);
+});
+
+app.delete('/api/memes', adminAuth, (req, res) => {
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'id required' });
+  const memes = readMemes();
+  const idx = memes.findIndex(m => m.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Пост не найден' });
+  memes.splice(idx, 1);
+  writeMemes(memes);
+  res.json({ ok: true });
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 app.listen(PORT, () => console.log(`Memesite: http://localhost:${PORT}`));

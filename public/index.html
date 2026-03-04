@@ -56,6 +56,7 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+    a.badge:hover { color: var(--accent); border-color: var(--accent-dim); }
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -231,6 +232,7 @@
     <header>
       <span class="logo">Мемчики</span>
       <span class="badge">NLauncher</span>
+      <a href="/admin" class="badge" style="margin-left:auto;text-decoration:none;color:var(--text-muted);">Админ-панель</a>
     </header>
 
     <div class="card">
@@ -269,6 +271,12 @@
     const zoneIcon = document.getElementById('zoneIcon');
     const filenameEl = document.getElementById('filename');
     const feed = document.getElementById('feed');
+    const nicknameInput = document.getElementById('nickname');
+
+    (function prefillAdminNick() {
+      var username = localStorage.getItem('memesite_admin_username') || sessionStorage.getItem('memesite_admin_username');
+      if (username && nicknameInput) nicknameInput.value = username;
+    })();
 
     (function () {
       var dialogOpen = false;
@@ -399,8 +407,9 @@
         fileInput.value = '';
         updatePreview();
         this.reset();
-        document.getElementById('nickname').value = '';
         document.getElementById('caption').value = '';
+        var adminUser = localStorage.getItem('memesite_admin_username') || sessionStorage.getItem('memesite_admin_username');
+        document.getElementById('nickname').value = adminUser ? adminUser : '';
         loadFeed();
       } catch (err) {
         feed.innerHTML = '<p class="error">' + escapeHtml(err.message) + '</p>';

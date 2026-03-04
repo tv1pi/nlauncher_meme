@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ-панель — Мемчики</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0b0f;
+      --surface: rgba(255,255,255,0.03);
+      --surface-hover: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.08);
+      --accent: #00d4aa;
+      --accent-dim: #00a884;
+      --text: #e4e4e7;
+      --text-muted: #71717a;
+      --glow: rgba(0,212,170,0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, var(--glow), transparent),
+        linear-gradient(180deg, var(--bg) 0%, #0f0f14 100%);
+    }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 32px 20px; }
+    header {
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .logo {
+      font-family: 'Unbounded', sans-serif;
+      font-weight: 600;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    .card h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 16px; }
+    .field:last-of-type { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent-dim);
+    }
+    .btn {
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+      color: #0b0b0f;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px var(--glow);
+    }
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-hover); border-color: rgba(255,255,255,0.12); }
+    .btn-danger {
+      background: rgba(248,113,113,0.2);
+      color: #f87171;
+      border: 1px solid rgba(248,113,113,0.4);
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.3); }
+    .link-back {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .link-back:hover { color: var(--accent); }
+
+    /* Запомнить меня — свитчер в стиле iPhone, но в стиле сайта */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .switch-row span {
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .ios-switch {
+      position: relative;
+      width: 52px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+    .ios-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--text);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.25s ease;
+    }
+    .ios-switch.on {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .ios-switch.on::after {
+      transform: translateX(20px);
+      background: #fff;
+    }
+    .ios-switch input {
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+    }
+
+    #loginForm .error-msg { color: #f87171; font-size: 0.85rem; margin-top: 8px; }
+    #adminPanel { display: none; }
+    #adminPanel.visible { display: block; }
+    #loginForm.hidden { display: none; }
+
+    .feed-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feed-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    #adminFeed { display: flex; flex-direction: column; gap: 20px; }
+    .meme-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .meme-card:hover { border-color: rgba(255,255,255,0.12); }
+    .meme-card img { width: 100%; display: block; vertical-align: middle; max-height: 320px; object-fit: contain; background: #000; }
+    .meme-card .meta { padding: 14px 18px; font-size: 0.85rem; }
+    .meme-card .top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .meme-card .nick { color: var(--accent); font-weight: 600; }
+    .meme-card .date { color: var(--text-muted); font-size: 0.8rem; }
+    .meme-card .caption { color: var(--text-muted); line-height: 1.45; margin-bottom: 12px; }
+    .meme-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .meme-card .actions .btn { padding: 8px 14px; font-size: 0.8rem; }
+    .loading { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 0.9rem; }
+    .error { color: #f87171; padding: 16px; font-size: 0.9rem; }
+
+    .edit-form {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .edit-form .field { margin-bottom: 10px; }
+    .edit-form .field:last-of-type { margin-bottom: 12px; }
+    .edit-form .btn { margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="logo">Админ — Мемчики</span>
+      <span class="badge">NLauncher</span>
+      <a href="/" class="link-back">← На главную</a>
+    </header>
+
+    <div id="loginForm" class="card">
+      <h2>Вход</h2>
+      <form id="authForm">
+        <div class="field">
+          <label for="adminLogin">Логин</label>
+          <input type="text" id="adminLogin" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="adminPassword">Пароль</label>
+          <input type="password" id="adminPassword" name="password" autocomplete="current-password" required>
+        </div>
+        <div class="switch-row">
+          <span>Запомнить меня</span>
+          <label class="ios-switch" id="rememberSwitch" role="switch" aria-checked="false">
+            <input type="checkbox" id="rememberMe" name="remember">
+          </label>
+        </div>
+        <div class="error-msg" id="loginError" hidden></div>
+        <button type="submit" class="btn btn-primary">Войти</button>
+      </form>
+    </div>
+
+    <div id="adminPanel" class="admin-panel">
+      <div class="card">
+        <p style="margin-bottom:12px;color:var(--text-muted);font-size:0.9rem;">Вы вошли как <strong id="adminUsername" style="color:var(--accent);"></strong>. <button type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:0.8rem;" id="logoutBtn">Выйти</button></p>
+      </div>
+      <h2 class="feed-title">Лента — редактирование</h2>
+      <div id="adminFeed">
+        <div class="loading">Загрузка…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const rememberSwitch = document.getElementById('rememberSwitch');
+      const rememberMe = document.getElementById('rememberMe');
+      rememberMe.addEventListener('change', function () {
+        rememberSwitch.classList.toggle('on', this.checked);
+        rememberSwitch.setAttribute('aria-checked', this.checked);
+      });
+      rememberSwitch.addEventListener('click', function (e) {
+        if (e.target === rememberMe) return;
+        rememberMe.checked = !rememberMe.checked;
+        rememberSwitch.classList.toggle('on', rememberMe.checked);
+        rememberSwitch.setAttribute('aria-checked', rememberMe.checked);
+      });
+      if (localStorage.getItem('memesite_admin_username')) {
+        rememberMe.checked = true;
+        rememberSwitch.classList.add('on');
+        rememberSwitch.setAttribute('aria-checked', 'true');
+      }
+    })();
+
+    function getStoredAuth() {
+      const token = localStorage.getItem('memesite_admin_token') || sessionStorage.getItem('memesite_admin_token');
+      const username = localStorage.getItem('memesite_admin_username') || sessionStorage.getItem('memesite_admin_username');
+      return { token, username };
+    }
+
+    function setStoredAuth(token, username, remember) {
+      if (remember) {
+        localStorage.setItem('memesite_admin_token', token);
+        localStorage.setItem('memesite_admin_username', username);
+        sessionStorage.removeItem('memesite_admin_token');
+        sessionStorage.removeItem('memesite_admin_username');
+      } else {
+        sessionStorage.setItem('memesite_admin_token', token);
+        sessionStorage.setItem('memesite_admin_username', username);
+        localStorage.removeItem('memesite_admin_token');
+        localStorage.removeItem('memesite_admin_username');
+      }
+    }
+
+    function clearStoredAuth() {
+      localStorage.removeItem('memesite_admin_token');
+      localStorage.removeItem('memesite_admin_username');
+      sessionStorage.removeItem('memesite_admin_token');
+      sessionStorage.removeItem('memesite_admin_username');
+    }
+
+    const loginForm = document.getElementById('loginForm');
+    const adminPanel = document.getElementById('adminPanel');
+    const loginError = document.getElementById('loginError');
+    const adminUsername = document.getElementById('adminUsername');
+    const adminFeed = document.getElementById('adminFeed');
+
+    function showPanel() {
+      const { username } = getStoredAuth();
+      if (username) adminUsername.textContent = username;
+      loginForm.classList.add('hidden');
+      adminPanel.classList.add('visible');
+      loadAdminFeed();
+    }
+
+    function showLogin(err) {
+      loginForm.classList.remove('hidden');
+      adminPanel.classList.remove('visible');
+      if (err) {
+        loginError.textContent = err;
+        loginError.hidden = false;
+      } else {
+        loginError.hidden = true;
+      }
+    }
+
+    if (getStoredAuth().token) {
+      showPanel();
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      loginError.hidden = true;
+      const username = document.getElementById('adminLogin').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const remember = document.getElementById('rememberMe').checked;
+      try {
+        const r = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          showLogin(data.error || 'Ошибка входа');
+          return;
+        }
+        if (data.token && data.username) {
+          setStoredAuth(data.token, data.username, remember);
+          showPanel();
+        } else {
+          showLogin('Неверный ответ сервера');
+        }
+      } catch (err) {
+        showLogin('Нет связи с сервером');
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', function () {
+      clearStoredAuth();
+      showLogin();
+    });
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleString('ru-RU', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function getAuthHeader() {
+      const { token } = getStoredAuth();
+      return token ? { 'Authorization': 'Bearer ' + token } : {};
+    }
+
+    function loadAdminFeed() {
+      adminFeed.innerHTML = '<div class="loading">Загрузка…</div>';
+      fetch('/api/memes')
+        .then(r => r.json())
+        .then(memes => renderAdminFeed(memes))
+        .catch(() => {
+          adminFeed.innerHTML = '<p class="error">Не удалось загрузить ленту.</p>';
+        });
+    }
+
+    function renderAdminFeed(memes) {
+      if (memes.length === 0) {
+        adminFeed.innerHTML = '<p class="loading">Постов пока нет.</p>';
+        return;
+      }
+      adminFeed.innerHTML = memes.map(m => `
+        <article class="meme-card" data-id="${escapeHtml(m.id)}">
+          <img src="${m.imageUrl}" alt="" loading="lazy">
+          <div class="meta">
+            <div class="top">
+              <span class="nick">${escapeHtml(m.nickname)}</span>
+              <span class="date">${formatDate(m.date)}</span>
+            </div>
+            ${m.caption ? `<div class="caption">${escapeHtml(m.caption)}</div>` : '<div class="caption"></div>'}
+            <div class="actions">
+              <button type="button" class="btn btn-ghost btn-edit">Редактировать</button>
+              <button type="button" class="btn btn-danger btn-delete">Удалить</button>
+            </div>
+            <div class="edit-form" style="display:none;">
+              <div class="field">
+                <label>Ник</label>
+                <input type="text" class="edit-nickname" value="${escapeHtml(m.nickname)}" maxlength="64">
+              </div>
+              <div class="field">
+                <label>Подпись</label>
+                <input type="text" class="edit-caption" value="${escapeHtml(m.caption)}" maxlength="256">
+              </div>
+              <button type="button" class="btn btn-primary btn-save-edit">Сохранить</button>
+              <button type="button" class="btn btn-ghost btn-cancel-edit">Отмена</button>
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      adminFeed.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const card = this.closest('.meme-card');
+          card.querySelector('.edit-form').style.display = 'block';
+          card.querySelector('.actions').style.display = 'none';
+        });
+      });
+      adminFeed.querySelectorAll('.btn-cancel-edit').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const card = this.closest('.meme-card');
+          card.querySelector('.edit-form').style.display = 'none';
+          card.querySelector('.actions').style.display = 'flex';
+        });
+      });
+      adminFeed.querySelectorAll('.btn-save-edit').forEach(btn => {
+        btn.addEventListener('click', async function () {
+          const card = this.closest('.meme-card');
+          const id = card.dataset.id;
+          const nickname = card.querySelector('.edit-nickname').value.trim() || 'Аноним';
+          const caption = card.querySelector('.edit-caption').value.trim();
+          const headers = { 'Content-Type': 'application/json', ...getAuthHeader() };
+          try {
+            const r = await fetch('/api/memes', {
+              method: 'PATCH',
+              headers,
+              body: JSON.stringify({ id, nickname, caption })
+            });
+            if (r.status === 401) {
+              clearStoredAuth();
+              showLogin('Сессия истекла. Войдите снова.');
+              return;
+            }
+            if (!r.ok) {
+              const data = await r.json().catch(() => ({}));
+              alert(data.error || 'Ошибка сохранения');
+              return;
+            }
+            card.querySelector('.nick').textContent = nickname;
+            card.querySelector('.caption').textContent = caption;
+            card.querySelector('.edit-form').style.display = 'none';
+            card.querySelector('.actions').style.display = 'flex';
+          } catch (err) {
+            alert('Ошибка сети');
+          }
+        });
+      });
+      adminFeed.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', async function () {
+          if (!confirm('Удалить этот пост?')) return;
+          const card = this.closest('.meme-card');
+          const id = card.dataset.id;
+          const headers = { 'Content-Type': 'application/json', ...getAuthHeader() };
+          try {
+            const r = await fetch('/api/memes', {
+              method: 'DELETE',
+              headers,
+              body: JSON.stringify({ id })
+            });
+            if (r.status === 401) {
+              clearStoredAuth();
+              showLogin('Сессия истекла. Войдите снова.');
+              return;
+            }
+            if (!r.ok) {
+              const data = await r.json().catch(() => ({}));
+              alert(data.error || 'Ошибка удаления');
+              return;
+            }
+            card.remove();
+          } catch (err) {
+            alert('Ошибка сети');
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
